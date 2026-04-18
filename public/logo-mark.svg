@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3B82F6" stop-opacity="0.45"></stop>
+      <stop offset="70%" stop-color="#3B82F6" stop-opacity="0"></stop>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#glow)"></circle>
+  <text x="60" y="78" text-anchor="middle" font-family="Fira Sans, system-ui, sans-serif" font-weight="900" font-size="64" fill="#F8FAFC" letter-spacing="-2">JV</text>
+  <circle cx="98" cy="30" r="2" fill="#F8FAFC"></circle>
+  <circle cx="22" cy="92" r="1.5" fill="#F8FAFC" opacity="0.6"></circle>
+  <circle cx="90" cy="95" r="1" fill="#F8FAFC" opacity="0.4"></circle>
+</svg>
