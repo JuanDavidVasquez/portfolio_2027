@@ -59,9 +59,9 @@ const activeFilter = ref('all')
 
 const filters = [
   { id: 'all',       labelKey: 'projects.all' },
-  { id: 'fullstack', labelKey: 'stack.frameworks' },
-  { id: 'backend',   labelKey: 'stack.cloud' },
-  { id: 'frontend',  labelKey: 'stack.languages' },
+  { id: 'fullstack', labelKey: 'projects.fullstack' },
+  { id: 'backend',   labelKey: 'projects.backend' },
+  { id: 'frontend',  labelKey: 'projects.frontend' },
 ]
 
 const allProjects = [
