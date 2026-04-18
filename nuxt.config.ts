@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     '~/assets/css/main.css',
   ],
   app: {
+    baseURL: process.env.NUXT_APP_BASE_URL ?? '/',
     head: {
       title: 'Juan Vasquez — Portafolio 2027',
       meta: [
