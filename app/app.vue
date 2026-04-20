@@ -9,6 +9,7 @@
       <AboutSection />
       <StackSection />
       <ProjectsSection />
+      <ClientOnly><LiveLabSection /></ClientOnly>
       <ContactSection />
     </main>
     <AppFooter />

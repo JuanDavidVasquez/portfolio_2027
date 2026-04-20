@@ -20,10 +20,10 @@
 const { t } = useLocale()
 
 const groups = [
-  { titleKey: 'stack.frameworks', items: ['NestJS', 'Nuxt 4', 'Vue 3', 'React', 'Laravel', 'PrimeVue 4'] },
-  { titleKey: 'stack.languages',  items: ['TypeScript', 'JavaScript', 'Node.js', 'HTML', 'CSS/SCSS'] },
-  { titleKey: 'stack.databases',  items: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis'] },
-  { titleKey: 'stack.cloud',      items: ['AWS', 'Docker', 'PM2', 'GitHub Actions', 'Nginx'] },
+  { titleKey: 'stack.frameworks', items: ['NestJS', 'Nuxt 4', 'Vue 3', 'React', 'Laravel', 'PrimeVue 4', 'Bootstrap', 'Tailwind CSS'] },
+  { titleKey: 'stack.languages',  items: ['TypeScript', 'JavaScript', 'Node.js', 'HTML', 'CSS/SCSS', 'Java'] },
+  { titleKey: 'stack.databases',  items: ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'VectorDB'] },
+  { titleKey: 'stack.cloud',      items: ['AWS', 'Docker', 'PM2', 'GitHub Actions', 'Nginx', 'Vercel', 'Hostinger'] },
   { titleKey: 'stack.ai',         items: ['OpenAI GPT', 'Google Gemini', 'Prompt design'] },
 ]
 </script>
