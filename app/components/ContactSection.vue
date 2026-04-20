@@ -42,11 +42,11 @@
               @blur="validateField('name')"
             />
             <label for="f-name" class="field__label">{{ t('contact.name') }}</label>
-            <span v-if="errors.name" class="field__error">{{ errors.name }}</span>
+            <span v-if="errors.name" class="field__err">{{ errors.name }}</span>
           </div>
 
-          <!-- Email -->
-          <div class="field" :class="{ 'field--error': errors.email, 'field--filled': form.email }">
+          <!-- Email (leading @ icon) -->
+          <div class="field field--icon" :class="{ 'field--error': errors.email, 'field--filled': form.email }">
             <input
               id="f-email"
               v-model="form.email"
@@ -55,8 +55,9 @@
               class="field__input"
               @blur="validateField('email')"
             />
+            <span class="field__icon">@</span>
             <label for="f-email" class="field__label">{{ t('contact.email') }}</label>
-            <span v-if="errors.email" class="field__error">{{ errors.email }}</span>
+            <span v-if="errors.email" class="field__err">{{ errors.email }}</span>
           </div>
 
           <!-- Message -->
@@ -65,12 +66,12 @@
               id="f-msg"
               v-model="form.message"
               placeholder=" "
-              class="field__input field__textarea"
-              rows="5"
+              class="field__input"
+              rows="4"
               @blur="validateField('message')"
             />
             <label for="f-msg" class="field__label">{{ t('contact.message') }}</label>
-            <span v-if="errors.message" class="field__error">{{ errors.message }}</span>
+            <span v-if="errors.message" class="field__err">{{ errors.message }}</span>
           </div>
 
           <div class="contact__form-footer">
@@ -180,49 +181,106 @@ function onSubmit() {
   word-break: break-all;
 }
 
-/* Form */
+/* ===== Form ===== */
 .contact__form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* FloatLabel field */
+/* FloatLabel — variant="on": label floats ONTO the top border */
 .field {
   position: relative;
 }
+
 .field__input {
+  display: block;
   width: 100%;
   box-sizing: border-box;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 22px 14px 8px;
-  color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--color-heading);
+  background: #0B1220;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  height: 48px;
+  padding: 0 14px;
   outline: none;
-  transition: border-color .2s ease, box-shadow .2s ease;
-  line-height: 1.5;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
-.field__textarea {
-  min-height: 110px;
-  resize: vertical;
-  padding-top: 24px;
-}
-.field__input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
-}
-.field--error .field__input {
-  border-color: var(--color-danger);
-}
-.field--error .field__input:focus {
-  box-shadow: 0 0 0 3px rgba(239,68,68,.15);
+.field__input::placeholder { color: transparent; }
+
+/* Label — rest: vertically centered inside the field */
+.field__label {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1;
+  color: var(--color-muted);
+  padding: 0 6px;
+  background: transparent;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: top .2s ease, left .2s ease, font-size .2s ease,
+              color .2s ease, background-color .2s ease, letter-spacing .2s ease;
 }
 
-/* Float label */
-.field__label {
+/* Floated — label sits ON the border line (center at top: 0) */
+.field:focus-within .field__label,
+.field--filled .field__label {
+  top: 0;
+  font-size: 11px;
+  color: var(--color-primary);
+  background: var(--color-bg);
+  font-family: var(--font-mono);
+  letter-spacing: .5px;
+}
+
+/* Focus ring */
+.field__input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.18);
+  background: #0F172A;
+}
+
+/* Error state */
+.field--error .field__input { border-color: var(--color-danger); }
+.field--error .field__input:focus { box-shadow: 0 0 0 3px rgba(239,68,68,.18); }
+.field--error:focus-within .field__label,
+.field--error.field--filled .field__label { color: var(--color-danger); }
+
+/* Error message — with ! circle prefix */
+.field__err {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-danger);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.field__err::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  color: #fff;
+  font-weight: 700;
+  font-size: 10px;
+  flex: none;
+}
+
+/* Leading icon (email @ symbol) */
+.field--icon .field__input { padding-left: 42px; }
+.field__icon {
   position: absolute;
   left: 14px;
   top: 50%;
@@ -231,42 +289,35 @@ function onSubmit() {
   font-size: 14px;
   color: var(--color-muted);
   pointer-events: none;
-  transition: top .2s ease, font-size .2s ease, color .2s ease, background .2s ease;
-  padding: 0 2px;
+  transition: color .2s ease;
+  z-index: 1;
 }
-/* textarea: label starts near top */
+.field--icon:focus-within .field__icon { color: var(--color-primary); }
+/* label rests after the icon */
+.field--icon .field__label { left: 36px; }
+/* label moves back left when floated */
+.field--icon:focus-within .field__label,
+.field--icon.field--filled .field__label { left: 10px; }
+
+/* Textarea */
+.field--textarea .field__input {
+  height: auto;
+  min-height: 88px;
+  resize: none;
+  padding: 14px;
+  line-height: 1.45;
+}
 .field--textarea .field__label {
-  top: 20px;
+  top: 14px;
+  transform: none;
+}
+.field--textarea:focus-within .field__label,
+.field--textarea.field--filled .field__label {
+  top: 0;
   transform: none;
 }
 
-/* Float up when focused or filled */
-.field__input:focus + .field__label,
-.field__input:not(:placeholder-shown) + .field__label,
-.field--filled .field__label {
-  top: 6px;
-  transform: none;
-  font-size: 10px;
-  color: var(--color-primary);
-  background: var(--color-surface);
-}
-.field--textarea .field__input:focus + .field__label,
-.field--textarea .field__input:not(:placeholder-shown) + .field__label {
-  top: 6px;
-}
-.field--error .field__input:focus + .field__label,
-.field--error .field__input:not(:placeholder-shown) + .field__label {
-  color: var(--color-danger);
-}
-
-.field__error {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--color-danger);
-  margin-top: 4px;
-  display: block;
-}
-
+/* Form footer */
 .contact__form-footer {
   display: flex;
   justify-content: flex-end;
@@ -279,7 +330,7 @@ function onSubmit() {
   color: var(--color-success);
 }
 
-/* Button */
+/* Submit button */
 .btn {
   font-family: var(--font-body);
   font-size: 14px;
@@ -306,4 +357,8 @@ function onSubmit() {
 /* Transition */
 .fade-enter-active, .fade-leave-active { transition: opacity .3s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 640px) {
+  .contact { padding: 80px 20px; }
+}
 </style>

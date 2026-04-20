@@ -19,14 +19,10 @@
 const loading = ref(false)
 
 onMounted(() => {
-  const key = 'portafolio.loaded'
-  if (!sessionStorage.getItem(key)) {
-    loading.value = true
-  }
+  loading.value = true
 })
 
 function onLoaderDone() {
   loading.value = false
-  try { sessionStorage.setItem('portafolio.loaded', '1') } catch {}
 }
 </script>

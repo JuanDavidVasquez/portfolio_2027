@@ -46,7 +46,17 @@ a:hover { color: var(--color-accent); }
   color: #F8FAFC;
 }
 
+/* ---------- CSS Houdini: card sweep border ---------- */
+@property --ang {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 /* ---------- Keyframes ---------- */
+@keyframes jv-spin {
+  to { --ang: 360deg; }
+}
 @keyframes pFadeUp {
   to { opacity: 1; transform: translateY(0); }
 }
