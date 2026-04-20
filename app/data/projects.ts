@@ -38,6 +38,7 @@ export interface Project {
   status: 'ok' | 'warn'
   cat: 'fullstack' | 'backend' | 'frontend'
   source: 'cliente' | 'open source'
+  security?: string[]
 }
 
 export const projects: Project[] = [
@@ -639,4 +640,82 @@ export const projects: Project[] = [
     cat: 'fullstack',
     source: 'cliente',
   },
+  {
+    slug: 'recruitment-management-system',
+    year: 2020,
+    title: 'Recruitment Management System',
+
+    context: {
+      es: 'Sistema desarrollado para estructurar y controlar el proceso de selección de talento, garantizando trazabilidad completa desde el registro del candidato hasta la contratación.',
+      en: 'System designed to structure and control the recruitment process, ensuring full traceability from candidate intake to hiring.'
+    },
+
+    desc: {
+      es: 'Plataforma integral para gestión de reclutamiento que cubre evaluación inicial, entrevistas por etapas y formalización contractual.',
+      en: 'End-to-end recruitment platform covering initial screening, multi-stage interviews and contract formalization.'
+    },
+
+    architecture: {
+      type: 'Monolito modular (API + frontend desacoplado)',
+      decisions: [
+        'Centralización del flujo de भर्ती para mantener trazabilidad completa del candidato',
+        'Separación por etapas del proceso (reclutador, psicología, jefe inmediato)',
+        'Modelo de estados para controlar el avance del candidato'
+      ]
+    },
+
+    tech: {
+      frontend: ['React', 'jQuery'],
+      backend: ['Laravel'],
+      database: ['MySQL']
+    },
+
+    ui: {
+      typography: ['Roboto', 'Open Sans'],
+      colors: {
+        primary: '#1D4ED8',
+        secondary: '#64748B',
+        accent: '#22C55E',
+        background: '#F1F5F9',
+        text: '#0F172A'
+      },
+      design: 'Enfocado en productividad y claridad de información para procesos administrativos',
+      animations: ['Feedback visual en estados', 'Transiciones simples para formularios']
+    },
+
+    flows: [
+      'Reclutador registra candidato → asigna valoración inicial',
+      'Candidato aprobado → pasa a entrevista con psicología',
+      'Validación psicológica → envío a jefe inmediato',
+      'Aprobación final → generación de condiciones laborales',
+      'Creación de contrato según salario y términos definidos'
+    ],
+
+    highlights: [
+      'Modelo de workflow basado en estados para seguimiento del candidato',
+      'Trazabilidad completa del proceso de selección',
+      'Estandarización de evaluaciones por etapa',
+      'Automatización parcial de generación de contrato'
+    ],
+
+    performance: {
+      es: 'Optimizado para manejo de múltiples procesos simultáneos con consultas eficientes sobre estados de candidatos.',
+      en: 'Optimized for handling multiple concurrent recruitment processes with efficient candidate state queries.'
+    },
+
+    security: [
+      'Control de acceso por roles (reclutador, psicólogo, jefe)',
+      'Validación de datos en backend',
+    ],
+
+    impact: {
+      es: 'Reducción de tiempos en procesos de selección, mejora en la organización de candidatos y estandarización del flujo de contratación.',
+      en: 'Reduced hiring cycle time, improved candidate organization and standardized recruitment workflow.'
+    },
+
+    stats: 'Workflow estructurado · Alta trazabilidad',
+    status: 'ok',
+    cat: 'fullstack',
+    source: 'cliente'
+  }
 ]

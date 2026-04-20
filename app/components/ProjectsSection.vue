@@ -1,5 +1,5 @@
 <template>
-  <section id="proyectos" class="projects-outer" ref="outerEl" :style="{ '--year-count': years.length }">
+  <section id="proyectos" class="projects-outer" ref="outerEl" :style="{ '--total-slots': totalSlots }">
     <div class="projects-sticky">
       <div class="projects__inner">
 
@@ -68,7 +68,7 @@
         <div class="projects__grid-wrap">
           <div class="grid-edge-fade" :class="{ 'grid-edge-fade--visible': canScrollRight }" />
           <Transition name="grid" mode="out-in">
-            <div :key="activeYear" class="projects__grid" ref="gridEl" @scroll.passive="onGridScroll">
+            <div :key="activeYear" class="projects__grid" ref="gridEl">
               <article
                 v-for="(project, i) in filteredProjects"
                 :key="project.slug"
@@ -119,7 +119,7 @@
             class="grid-dot"
             :class="{ 'grid-dot--active': i === activeCardIdx }"
             @click="scrollToCard(i)"
-            :aria-label="`${p.title}`"
+            :aria-label="p.title"
           />
         </div>
 
@@ -147,13 +147,11 @@ const outerEl     = ref<HTMLElement | null>(null)
 const timelineEl  = ref<HTMLElement | null>(null)
 const gridEl      = ref<HTMLElement | null>(null)
 const yearEls: Record<number, HTMLElement> = {}
-const spacerWidth = ref('200px')
+const spacerWidth    = ref('200px')
 const scrollProgress = ref(0)
-
 const canScrollLeft  = ref(false)
 const canScrollRight = ref(false)
 const activeCardIdx  = ref(0)
-const showNav        = ref(false)
 
 const CARD_STEP = 360 // 340px card + 20px gap
 
@@ -173,76 +171,121 @@ function countByYear(year: number) {
   return allProjects.filter(p => p.year === year).length
 }
 
-function onGridScroll() {
-  const el = gridEl.value
-  if (!el) return
-  canScrollLeft.value  = el.scrollLeft > 4
-  canScrollRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 4
-  activeCardIdx.value  = Math.round(el.scrollLeft / CARD_STEP)
-}
+/* Years with > 3 projects get 2 scroll slots so the carousel scrolls before advancing year */
+const slotsPerYear = computed(() => {
+  const map: Record<number, number> = {}
+  for (const y of years.value) {
+    map[y] = countByYear(y) > 3 ? 2 : 1
+  }
+  return map
+})
 
-function scrollGrid(dir: number) {
-  gridEl.value?.scrollBy({ left: dir * CARD_STEP, behavior: 'smooth' })
-}
+const totalSlots = computed(() =>
+  years.value.reduce((s, y) => s + slotsPerYear.value[y], 0),
+)
 
-function scrollToCard(i: number) {
-  gridEl.value?.scrollTo({ left: i * CARD_STEP, behavior: 'smooth' })
-}
+const showNav = computed(() => (slotsPerYear.value[activeYear.value] ?? 1) > 1)
 
-function syncGridNav() {
-  nextTick(() => {
-    const el = gridEl.value
-    if (!el) return
-    el.scrollLeft    = 0
-    activeCardIdx.value  = 0
-    canScrollLeft.value  = false
-    canScrollRight.value = el.scrollWidth > el.clientWidth + 4
-    showNav.value        = canScrollRight.value
-  })
-}
-
-watch(activeYear, syncGridNav)
-
-/* Pan timeline to center a year — instant (no smooth) for scroll tracking */
+/* Pan timeline to center a year */
 function panToYear(year: number) {
   const el = yearEls[year]
   const container = timelineEl.value
   if (!el || !container) return
   const elRect   = el.getBoundingClientRect()
   const contRect = container.getBoundingClientRect()
-  const diff = elRect.left + elRect.width / 2 - (contRect.left + contRect.width / 2)
-  container.scrollLeft += diff
+  container.scrollLeft += elRect.left + elRect.width / 2 - (contRect.left + contRect.width / 2)
 }
 
-/* Click on node → scroll page to matching section progress */
+/* Scroll page so that the carousel lands on a target carouselScroll position within activeYear */
+function scrollPageToCarousel(carouselScroll: number) {
+  if (!outerEl.value || !gridEl.value) return
+  const el = gridEl.value
+  const maxScroll = el.scrollWidth - el.clientWidth
+  if (maxScroll <= 0) return
+
+  const within = Math.max(0, Math.min(1, carouselScroll / maxScroll))
+  let slotsBefore = 0
+  for (const y of years.value) {
+    if (y === activeYear.value) break
+    slotsBefore += slotsPerYear.value[y]
+  }
+  const slots    = slotsPerYear.value[activeYear.value] ?? 1
+  const progress = (slotsBefore + within * slots) / totalSlots.value
+
+  const outerH = outerEl.value.offsetHeight
+  const viewH  = window.innerHeight
+  const navH   = 60
+  window.scrollTo({ top: outerEl.value.offsetTop - navH + progress * (outerH - viewH), behavior: 'smooth' })
+}
+
+function scrollGrid(dir: number) {
+  const el = gridEl.value
+  if (!el) return
+  const maxScroll = el.scrollWidth - el.clientWidth
+  scrollPageToCarousel(Math.max(0, Math.min(maxScroll, el.scrollLeft + dir * CARD_STEP)))
+}
+
+function scrollToCard(i: number) {
+  scrollPageToCarousel(i * CARD_STEP)
+}
+
+/* Click on timeline node */
 function jumpToYear(year: number) {
   if (!outerEl.value) return
-  const idx      = years.value.indexOf(year)
-  const progress = idx / years.value.length + 0.01
+  let slotsBefore = 0
+  for (const y of years.value) {
+    if (y === year) break
+    slotsBefore += slotsPerYear.value[y]
+  }
+  const progress = slotsBefore / totalSlots.value + 0.005
+  const outerH = outerEl.value.offsetHeight
+  const viewH  = window.innerHeight
+  const navH   = 60
+  window.scrollTo({ top: outerEl.value.offsetTop - navH + progress * (outerH - viewH), behavior: 'smooth' })
+}
+
+/* Main scroll handler — drives both year and carousel */
+function onWindowScroll() {
+  if (!outerEl.value) return
   const outerH   = outerEl.value.offsetHeight
   const viewH    = window.innerHeight
   const navH     = 60
-  const targetScrollY = outerEl.value.offsetTop - navH + progress * (outerH - viewH)
-  window.scrollTo({ top: targetScrollY, behavior: 'smooth' })
-}
-
-/* Window scroll → derive active year from progress */
-function onWindowScroll() {
-  if (!outerEl.value) return
-  const outerH  = outerEl.value.offsetHeight
-  const viewH   = window.innerHeight
-  const navH    = 60
   const scrolled = window.scrollY - outerEl.value.offsetTop + navH
-
   const progress = Math.max(0, Math.min(1, scrolled / (outerH - viewH)))
   scrollProgress.value = progress
 
-  const idx     = Math.min(years.value.length - 1, Math.floor(progress * years.value.length))
-  const newYear = years.value[idx]
+  const scrollSlot = progress * totalSlots.value
+
+  /* Map scrollSlot → year + within-year progress */
+  let accumulated = 0
+  let newYear = years.value[0]
+  let within  = 0
+  for (const y of years.value) {
+    const slots = slotsPerYear.value[y]
+    if (scrollSlot < accumulated + slots) {
+      newYear = y
+      within  = (scrollSlot - accumulated) / slots
+      break
+    }
+    accumulated += slots
+    newYear = y
+    within  = 1
+  }
 
   if (newYear !== activeYear.value) {
     activeYear.value = newYear
     panToYear(newYear)
+  }
+
+  /* Drive carousel scroll */
+  const el = gridEl.value
+  if (el) {
+    const maxScroll = el.scrollWidth - el.clientWidth
+    const target    = within * maxScroll
+    el.scrollLeft   = target
+    canScrollLeft.value  = target > 4
+    canScrollRight.value = target < maxScroll - 4
+    activeCardIdx.value  = Math.round(target / CARD_STEP)
   }
 }
 
@@ -252,7 +295,6 @@ onMounted(() => {
       spacerWidth.value = `${timelineEl.value.clientWidth / 2}px`
       nextTick(() => panToYear(activeYear.value))
     }
-    syncGridNav()
   })
   window.addEventListener('scroll', onWindowScroll, { passive: true })
 })
@@ -265,7 +307,7 @@ onUnmounted(() => {
 <style scoped>
 /* ===== Scroll-driver outer shell ===== */
 .projects-outer {
-  height: calc(var(--year-count, 4) * 100vh);
+  height: calc(var(--total-slots, 5) * 100vh);
   position: relative;
 }
 
@@ -431,7 +473,7 @@ onUnmounted(() => {
   z-index: 1;
 }
 
-/* ===== Active year label + carousel nav ===== */
+/* ===== Active year label + nav ===== */
 .tl-active-label {
   display: flex;
   align-items: center;
@@ -464,7 +506,6 @@ onUnmounted(() => {
 .carousel-nav {
   display: flex;
   gap: 8px;
-  align-items: center;
 }
 
 .carousel-btn {
@@ -478,13 +519,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background .2s ease, border-color .2s ease, color .2s ease, opacity .2s ease;
-  flex-shrink: 0;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
 }
-.carousel-btn:disabled {
-  opacity: .25;
-  cursor: not-allowed;
-}
+.carousel-btn:disabled { opacity: .25; cursor: not-allowed; }
 .carousel-btn:not(:disabled):hover {
   background: var(--color-primary);
   border-color: var(--color-primary);
@@ -497,14 +534,14 @@ onUnmounted(() => {
 .year-label-enter-from   { opacity: 0; transform: translateY(8px); }
 .year-label-leave-to     { opacity: 0; transform: translateY(-6px); }
 
-/* ===== Projects carousel wrapper ===== */
+/* ===== Grid wrapper + edge fade ===== */
 .projects__grid-wrap {
   position: relative;
 }
 
 .grid-edge-fade {
   position: absolute;
-  right: 0; top: 0; bottom: 12px;
+  right: 0; top: 0; bottom: 16px;
   width: 120px;
   background: linear-gradient(to right, transparent, var(--color-bg) 85%);
   pointer-events: none;
@@ -520,19 +557,14 @@ onUnmounted(() => {
 .grid-enter-from   { opacity: 0; transform: translateY(14px); }
 .grid-leave-to     { opacity: 0; }
 
-/* ===== Projects grid — horizontal scroll ===== */
+/* ===== Projects grid ===== */
 .projects__grid {
   display: flex;
   flex-wrap: nowrap;
   gap: 20px;
-  overflow-x: auto;
-  overflow-y: visible;
-  scroll-snap-type: x mandatory;
+  overflow: hidden; /* scroll is driven by JS, no manual scrolling */
   padding: 8px 0 16px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
 }
-.projects__grid::-webkit-scrollbar { display: none; }
 
 /* ===== Dot indicators ===== */
 .grid-dots {
@@ -572,9 +604,7 @@ onUnmounted(() => {
   transition: opacity .5s ease;
 }
 .scroll-hint--done { opacity: 0; pointer-events: none; }
-.scroll-hint__dot {
-  animation: scroll-bounce 1.4s ease-in-out infinite;
-}
+.scroll-hint__dot { animation: scroll-bounce 1.4s ease-in-out infinite; }
 @keyframes scroll-bounce {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(3px); }
@@ -590,7 +620,6 @@ onUnmounted(() => {
   overflow: hidden;
   cursor: pointer;
   flex: 0 0 340px;
-  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   transition: transform .35s cubic-bezier(.2,.7,.2,1), border-color .3s ease, box-shadow .35s ease;
