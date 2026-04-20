@@ -4,14 +4,7 @@
       <AppLoader v-if="loading" :duration="2500" @done="onLoaderDone" />
     </ClientOnly>
     <AppNav />
-    <main>
-      <HeroSection />
-      <AboutSection />
-      <StackSection />
-      <ProjectsSection />
-      <ClientOnly><LiveLabSection /></ClientOnly>
-      <ContactSection />
-    </main>
+    <NuxtPage />
     <AppFooter />
   </div>
 </template>

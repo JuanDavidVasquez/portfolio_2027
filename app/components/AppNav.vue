@@ -52,6 +52,13 @@
     >
       <span class="idx">{{ String(i + 1).padStart(2, '0') }}</span>{{ t(item.labelKey) }}
     </a>
+
+    <div class="jv-menu__footer">
+      <div class="jv-lang jv-lang--menu">
+        <button :class="{ on: locale === 'es' }" @click="setLocale('es')">ES</button>
+        <button :class="{ on: locale === 'en' }" @click="setLocale('en')">EN</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -285,5 +292,33 @@ watch(menuOpen, (open) => {
   font-weight: 400;
   letter-spacing: 2px;
   vertical-align: middle;
+}
+
+/* Menu footer: lang toggle inside overlay */
+.jv-menu__footer {
+  position: absolute;
+  bottom: 48px;
+  left: 12vw;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .4s ease .9s, transform .4s ease .9s;
+}
+.jv-menu.on .jv-menu__footer {
+  opacity: 1;
+  transform: translateY(0);
+}
+.jv-lang--menu {
+  border-color: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.06);
+}
+.jv-lang--menu button { color: rgba(255,255,255,.55); }
+.jv-lang--menu button.on { background: rgba(255,255,255,.15); color: #fff; }
+
+/* Responsive: only brand + hamburger */
+@media (max-width: 768px) {
+  .jv-nav { padding: 16px 20px; }
+  .jv-lang:not(.jv-lang--menu),
+  .jv-cv,
+  .jv-theme { display: none; }
 }
 </style>
