@@ -6,6 +6,7 @@
     <AppNav />
     <NuxtPage />
     <AppFooter />
+    <GravityButton />
   </div>
 </template>
 
