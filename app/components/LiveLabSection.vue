@@ -64,6 +64,7 @@
             v-for="poke in displayedPokemon"
             :key="poke.id"
             class="poke-card"
+            @click="goToPokemon(poke.id)"
           >
             <span class="poke-card__num">#{{ String(poke.id).padStart(4, '0') }}</span>
             <div class="poke-card__img-wrap">
@@ -269,6 +270,10 @@ onMounted(async () => {
     await fetchCurrentPage()
   }
 })
+
+const goToPokemon = (id: number) => {
+  navigateTo(`/pokemons/${id}`)
+}
 </script>
 
 <style scoped>
