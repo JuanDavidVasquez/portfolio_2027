@@ -1,4 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const rawBaseURL = process.env.NUXT_APP_BASE_URL ?? '/'
+const normalizedBaseURL = rawBaseURL === '/'
+  ? '/'
+  : `/${rawBaseURL.replace(/^\/+|\/+$/g, '')}/`
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -7,7 +12,7 @@ export default defineNuxtConfig({
     '~/assets/css/main.css',
   ],
   app: {
-    baseURL: process.env.NUXT_APP_BASE_URL ?? '/',
+    baseURL: normalizedBaseURL,
     head: {
       title: 'Juan Vasquez — Portafolio 2027',
       meta: [

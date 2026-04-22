@@ -29,21 +29,17 @@ jobs:
         run: npm ci
 
       - name: Generate static site
+        env:
+          NUXT_APP_BASE_URL: /portfolio_2027/
         run: npx nuxt generate
 
-      - name: Fix asset paths for GitHub Pages subdirectory
+      - name: Create SPA fallback files
         run: |
-          REPO="portfolio_2027"
           FILE=".output/public/200.html"
-          # Replace /_nuxt/ with /portfolio_2027/_nuxt/ (covers CSS, JS, preload links, buildAssetsDir)
-          sed -i "s|/_nuxt/|/${REPO}/_nuxt/|g" "$FILE"
-          # Replace /favicon.svg reference in <head>
-          sed -i "s|href=\"/favicon\.svg\"|href=\"/${REPO}/favicon.svg\"|g" "$FILE"
-          # Fix window.__NUXT__ baseURL so client-side router uses the correct base
-          sed -i "s|baseURL:\"/\"|baseURL:\"/${REPO}/\"|g" "$FILE"
           # Create index.html (GitHub Pages root) and 404.html (SPA routing fallback)
           cp "$FILE" .output/public/index.html
           cp "$FILE" .output/public/404.html
+          touch .output/public/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
