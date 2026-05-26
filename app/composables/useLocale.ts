@@ -72,8 +72,8 @@ const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'serv.s5.desc': 'Agentes GPT, Claude API y features de inteligencia artificial en productos reales.',
     // ── Origen ────────────────────────────────────────────────────
     'origen.eyebrow': '09 · Origen',
-    'origen.title': 'Cómo llegué hasta aquí.',
-    'origen.lead': 'No empecé en un bootcamp ni en una universidad de software. Empecé con HTML y mucha curiosidad. Esto es lo que pasó después.',
+    'origen.title': 'Timeline Profesional.',
+    'origen.lead': '',
     // ── Uses ──────────────────────────────────────────────────────
     'uses.eyebrow': '10 · /uses',
     'uses.title': 'Con qué construyo.',
@@ -211,8 +211,8 @@ const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'serv.s5.desc': 'GPT agents, Claude API and AI features integrated into real-world products.',
     // ── Origin ───────────────────────────────────────────────────
     'origen.eyebrow': '09 · Origin',
-    'origen.title': 'How I got here.',
-    'origen.lead': "I didn't start at a bootcamp or software university. I started with HTML and a lot of curiosity. Here's what happened next.",
+    'origen.title': 'Professional Timeline.',
+    'origen.lead': '',
     // ── Uses ─────────────────────────────────────────────────────
     'uses.eyebrow': '10 · /uses',
     'uses.title': 'What I build with.',
