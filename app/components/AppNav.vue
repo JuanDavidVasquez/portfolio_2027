@@ -69,11 +69,17 @@ const menuOpen = ref(false)
 const dark = ref(true)
 
 const menuItems = [
-  { id: 'inicio',    labelKey: 'menu.home' },
-  { id: 'sobre',     labelKey: 'menu.about' },
-  { id: 'stack',     labelKey: 'menu.stack' },
-  { id: 'proyectos', labelKey: 'menu.projects' },
-  { id: 'contacto',  labelKey: 'menu.contact' },
+  { id: 'inicio',      labelKey: 'menu.home' },
+  { id: 'sobre',       labelKey: 'menu.about' },
+  { id: 'stack',       labelKey: 'menu.stack' },
+  { id: 'proyectos',   labelKey: 'menu.projects' },
+  { id: 'referencias', labelKey: 'menu.referencias' },
+  { id: 'trayectoria', labelKey: 'menu.trayectoria' },
+  { id: 'caso-estudio',labelKey: 'menu.caso' },
+  { id: 'servicios',   labelKey: 'menu.servicios' },
+  { id: 'origen',      labelKey: 'menu.origen' },
+  { id: 'uses',        labelKey: 'menu.uses' },
+  { id: 'contacto',    labelKey: 'menu.contact' },
 ]
 
 watch(menuOpen, (open) => {
@@ -268,20 +274,26 @@ watch(menuOpen, (open) => {
   font-weight: 900;
   color: #fff;
   text-decoration: none;
-  font-size: clamp(40px, 7vw, 80px);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-  padding: 8px 0;
+  font-size: clamp(22px, 4vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  padding: 5px 0;
   transform: translateY(30px);
   opacity: 0;
   transition: transform .5s cubic-bezier(.2,.7,.2,1), opacity .4s ease, color .2s ease;
 }
 .jv-menu.on a { transform: translateY(0); opacity: 1; }
-.jv-menu.on a:nth-child(1) { transition-delay: .55s; }
-.jv-menu.on a:nth-child(2) { transition-delay: .62s; }
-.jv-menu.on a:nth-child(3) { transition-delay: .69s; }
-.jv-menu.on a:nth-child(4) { transition-delay: .76s; }
-.jv-menu.on a:nth-child(5) { transition-delay: .83s; }
+.jv-menu.on a:nth-child(1)  { transition-delay: .50s; }
+.jv-menu.on a:nth-child(2)  { transition-delay: .56s; }
+.jv-menu.on a:nth-child(3)  { transition-delay: .62s; }
+.jv-menu.on a:nth-child(4)  { transition-delay: .68s; }
+.jv-menu.on a:nth-child(5)  { transition-delay: .74s; }
+.jv-menu.on a:nth-child(6)  { transition-delay: .80s; }
+.jv-menu.on a:nth-child(7)  { transition-delay: .86s; }
+.jv-menu.on a:nth-child(8)  { transition-delay: .92s; }
+.jv-menu.on a:nth-child(9)  { transition-delay: .98s; }
+.jv-menu.on a:nth-child(10) { transition-delay: 1.04s; }
+.jv-menu.on a:nth-child(11) { transition-delay: 1.10s; }
 .jv-menu a:hover { color: #FACC15; }
 
 .idx {
