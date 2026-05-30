@@ -2,42 +2,63 @@
   <section id="inicio" class="hero">
     <canvas ref="canvasEl" class="hero__canvas" />
 
+    <!-- Floating code symbols background decoration -->
+    <div ref="symbolsEl" class="hero__symbols" aria-hidden="true">
+      <span v-for="sym in SYMBOLS" :key="sym + Math.random()" class="hero__symbol">{{ sym }}</span>
+    </div>
+
     <div class="hero__content">
-      <div class="hero__badge">
+      <div ref="badgeEl" class="hero__badge">
         <span class="hero__badge-dot" />
         {{ t('hero.available') }}
       </div>
 
-      <h1 class="hero__name">Juan Vasquez</h1>
+      <h1 ref="nameEl" class="hero__name">Juan Vasquez</h1>
 
-      <p class="hero__tagline">&gt; {{ t('hero.tagline') }}</p>
+      <p ref="taglineEl" class="hero__tagline">&gt; {{ t('hero.tagline') }}</p>
 
-      <div class="hero__ctas">
+      <div ref="ctasEl" class="hero__ctas">
         <a href="#proyectos" class="btn btn--primary">{{ t('hero.cta1') }} →</a>
         <a href="#contacto" class="btn btn--secondary">{{ t('hero.cta2') }}</a>
       </div>
     </div>
 
-    <div class="hero__scroll-hint">scroll ↓</div>
+    <div ref="scrollHintEl" class="hero__scroll-hint">scroll ↓</div>
   </section>
 </template>
 
 <script setup lang="ts">
 const { t } = useLocale()
 
-const canvasEl = useTemplateRef<HTMLCanvasElement>('canvasEl')
+const SYMBOLS = [
+  '</>', '{ }', 'const', '=>', 'async', 'await',
+  'npm i', 'fn()', '&&', '0xFF', 'interface',
+  '[ ]', 'return', 'null', 'type', '||', '...',
+]
 
-onMounted(() => {
-  const canvas = canvasEl.value
-  if (!canvas) return
-  const ctx = canvas.getContext('2d')!
+const canvasEl     = useTemplateRef<HTMLCanvasElement>('canvasEl')
+const symbolsEl    = useTemplateRef<HTMLElement>('symbolsEl')
+const badgeEl      = useTemplateRef<HTMLElement>('badgeEl')
+const nameEl       = useTemplateRef<HTMLElement>('nameEl')
+const taglineEl    = useTemplateRef<HTMLElement>('taglineEl')
+const ctasEl       = useTemplateRef<HTMLElement>('ctasEl')
+const scrollHintEl = useTemplateRef<HTMLElement>('scrollHintEl')
 
-  function resize() {
+let _raf = 0
+let _resizeFn = () => {}
+const _timelines: Array<{ kill(): void }> = []
+
+onMounted(async () => {
+  // ── Canvas: shooting-star animation ───────────────────────────────
+  const canvas = canvasEl.value!
+  const ctx    = canvas.getContext('2d')!
+
+  _resizeFn = () => {
     canvas.width  = canvas.clientWidth
     canvas.height = canvas.clientHeight
   }
-  resize()
-  window.addEventListener('resize', resize)
+  _resizeFn()
+  window.addEventListener('resize', _resizeFn)
 
   class Star {
     x = 0; y = 0; length = 0; speed = 0; size = 0
@@ -68,17 +89,51 @@ onMounted(() => {
   }
 
   const stars = Array.from({ length: 24 }, () => new Star())
-  let raf: number
-  ;(function loop() {
+  const loop = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     stars.forEach(s => { s.update(); s.draw() })
-    raf = requestAnimationFrame(loop)
-  })()
+    _raf = requestAnimationFrame(loop)
+  }
+  loop()
 
-  onUnmounted(() => {
-    cancelAnimationFrame(raf)
-    window.removeEventListener('resize', resize)
+  // ── GSAP ──────────────────────────────────────────────────────────
+  const { gsap } = await import('gsap')
+
+  // Hero content entrance timeline
+  const entranceTl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+  entranceTl
+    .from(badgeEl.value!,      { opacity: 0, y: 20, duration: 0.7 }, 0.2)
+    .from(nameEl.value!,       { opacity: 0, y: 60, duration: 1.1 }, 0.5)
+    .from(taglineEl.value!,    { opacity: 0, y: 30, duration: 0.8 }, 1.05)
+    .from(ctasEl.value!,       { opacity: 0, y: 20, duration: 0.7 }, 1.5)
+    .from(scrollHintEl.value!, { opacity: 0, duration: 0.6        }, 2.1)
+  _timelines.push(entranceTl)
+
+  // Floating symbols: staggered looping float upward
+  symbolsEl.value!.querySelectorAll<HTMLElement>('.hero__symbol').forEach((el) => {
+    const left    = 2 + Math.random() * 86        // 2–88 % from left
+    const startPct = 22 + Math.random() * 52      // 22–74 % from top
+    const drift   = 14 + Math.random() * 22       // how many % to float up
+    const dur     = 10 + Math.random() * 8        // 10–18 s per loop
+    const delay   = Math.random() * 8             // stagger start
+    const alpha   = 0.10 + Math.random() * 0.10  // 10–20 % opacity
+
+    gsap.set(el, { left: `${left}%`, top: `${startPct}%`, opacity: 0 })
+
+    const symTl = gsap.timeline({ repeat: -1, delay, repeatDelay: Math.random() * 5 + 1 })
+    symTl
+      .to(el, { opacity: alpha, duration: dur * 0.18, ease: 'power1.in' })
+      .to(el, { top: `${startPct - drift}%`, duration: dur, ease: 'none' }, 0)
+      .to(el, { opacity: 0, duration: dur * 0.22, ease: 'power1.out' }, `>-${dur * 0.22}`)
+      .set(el, { top: `${startPct}%` })
+    _timelines.push(symTl)
   })
+})
+
+onUnmounted(() => {
+  cancelAnimationFrame(_raf)
+  window.removeEventListener('resize', _resizeFn)
+  _timelines.forEach(tl => tl.kill())
 })
 </script>
 
@@ -98,9 +153,29 @@ onMounted(() => {
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 0;
 }
 
+/* ── Floating symbols ─────────────────────────────────────────── */
+.hero__symbols {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.hero__symbol {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: clamp(0.6rem, 1.1vw, 0.9rem);
+  color: rgba(147, 197, 253, 1);
+  user-select: none;
+  white-space: nowrap;
+  opacity: 0;
+  letter-spacing: 0.5px;
+}
+
+/* ── Content ──────────────────────────────────────────────────── */
 .hero__content {
   position: relative;
   z-index: 2;
@@ -121,8 +196,6 @@ onMounted(() => {
   font-size: 12px;
   color: var(--color-heading);
   margin-bottom: 32px;
-  opacity: 0;
-  animation: pFadeIn 1s ease forwards 0.2s;
 }
 
 .hero__badge-dot {
@@ -143,9 +216,6 @@ onMounted(() => {
   color: var(--color-heading);
   margin: 0;
   letter-spacing: -0.04em;
-  opacity: 0;
-  transform: translateY(40px);
-  animation: pFadeUp 1.5s ease forwards 0.5s;
 }
 
 .hero__tagline {
@@ -155,9 +225,6 @@ onMounted(() => {
   color: var(--color-muted);
   margin-top: 20px;
   margin-bottom: 48px;
-  opacity: 0;
-  transform: translateY(40px);
-  animation: pFadeUp 1.5s ease forwards 1s;
 }
 
 .hero__ctas {
@@ -165,8 +232,6 @@ onMounted(() => {
   gap: 14px;
   justify-content: center;
   flex-wrap: wrap;
-  opacity: 0;
-  animation: pFadeIn 1s ease forwards 1.4s;
 }
 
 .hero__scroll-hint {
@@ -180,11 +245,9 @@ onMounted(() => {
   letter-spacing: 2px;
   text-transform: uppercase;
   z-index: 2;
-  opacity: 0;
-  animation: pFadeIn 1s ease forwards 2s;
 }
 
-/* Buttons */
+/* ── Buttons ──────────────────────────────────────────────────── */
 .btn {
   font-family: var(--font-body);
   font-size: 14px;

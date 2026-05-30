@@ -64,7 +64,7 @@
             v-for="poke in displayedPokemon"
             :key="poke.id"
             class="poke-card"
-            @click="goToPokemon(poke.id)"
+            @click="openModal(poke.id)"
           >
             <span class="poke-card__num">#{{ String(poke.id).padStart(4, '0') }}</span>
             <div class="poke-card__img-wrap">
@@ -110,6 +110,82 @@
       </div><!-- /terminal -->
     </div>
   </section>
+
+  <!-- Pokemon modal -->
+  <Teleport to="body">
+    <Transition name="poke-modal">
+      <div
+        v-if="modalPoke"
+        class="poke-modal"
+        role="dialog"
+        aria-modal="true"
+        @click.self="closeModal"
+      >
+        <div class="poke-modal__card">
+          <!-- Terminal header -->
+          <div class="poke-modal__header">
+            <div class="poke-modal__dots">
+              <span style="background:#FF5F57" />
+              <span style="background:#FFBD2E" />
+              <span style="background:#28C840" />
+            </div>
+            <span class="poke-modal__id">
+              #{{ String(modalPoke.id).padStart(4, '0') }} — {{ modalPoke.name }}
+            </span>
+            <button class="poke-modal__close" @click="closeModal" aria-label="Cerrar">✕</button>
+          </div>
+
+          <!-- Body -->
+          <div class="poke-modal__body">
+            <!-- Sprite -->
+            <div class="poke-modal__sprite-wrap">
+              <img
+                v-if="modalPoke.sprite"
+                :src="modalPoke.sprite"
+                :alt="modalPoke.name"
+                class="poke-modal__sprite"
+              />
+              <div v-else class="poke-modal__sprite-skeleton" />
+            </div>
+
+            <!-- Types -->
+            <div class="poke-modal__types">
+              <span
+                v-for="tp in modalPoke.types"
+                :key="tp"
+                class="type-badge type-badge--lg"
+                :class="`type-badge--${tp}`"
+              >{{ tp.toUpperCase() }}</span>
+            </div>
+
+            <!-- Stats -->
+            <div v-if="modalPoke.stats.length" class="poke-modal__stats">
+              <div
+                v-for="stat in modalPoke.stats.slice(0, 6)"
+                :key="stat.name"
+                class="poke-modal__stat-row"
+              >
+                <span class="poke-modal__stat-name">{{ formatStatName(stat.name) }}</span>
+                <span class="poke-modal__stat-val">{{ stat.value }}</span>
+                <div class="poke-modal__stat-bar">
+                  <div
+                    class="poke-modal__stat-fill"
+                    :class="statColor(stat.value)"
+                    :style="{ width: `${Math.min(100, (stat.value / 180) * 100)}%` }"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- CTA -->
+            <button class="poke-modal__cta" @click="goToDetail(modalPoke.id)">
+              {{ t('lab.viewDetail') }} →
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -125,7 +201,7 @@ const TYPES = [
 
 /* ── state ── */
 const allPokemon      = ref<Array<{ id: number; name: string }>>([])
-const detailsCache    = reactive<Record<number, { sprite: string; types: string[] }>>({})
+const detailsCache    = reactive<Record<number, { sprite: string; types: string[]; stats: { name: string; value: number }[] }>>({})
 const typeIdCache: Record<string, Set<number>> = {}
 
 const query           = ref('')
@@ -135,6 +211,15 @@ const activeTypeIds   = ref<Set<number> | null>(null)
 const currentPage     = ref(1)
 const initialLoading  = ref(true)
 const totalCount      = ref(1025)
+
+/* ── modal state ── */
+const modalPoke = ref<{
+  id: number
+  name: string
+  sprite: string
+  types: string[]
+  stats: { name: string; value: number }[]
+} | null>(null)
 
 const cachedCount = computed(() => Object.keys(detailsCache).length)
 
@@ -200,6 +285,8 @@ async function fetchDetail(p: { id: number }) {
               ?? data.sprites?.front_default
               ?? '',
       types: (data.types as Array<{ type: { name: string } }>).map(t => t.type.name),
+      stats: (data.stats as Array<{ base_stat: number; stat: { name: string } }>)
+             .map(s => ({ name: s.stat.name, value: s.base_stat })),
     }
   } catch { /* network/rate error — silently skip */ }
 }
@@ -255,8 +342,51 @@ function goToPage(p: number) {
   document.getElementById('live-lab')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+/* ── modal ── */
+async function openModal(id: number) {
+  const base = allPokemon.value.find(p => p.id === id)
+  if (!base) return
+  if (!detailsCache[id]) await fetchDetail({ id })
+  modalPoke.value = {
+    id,
+    name:   base.name,
+    sprite: detailsCache[id]?.sprite ?? '',
+    types:  detailsCache[id]?.types  ?? [],
+    stats:  detailsCache[id]?.stats  ?? [],
+  }
+}
+
+function closeModal() {
+  modalPoke.value = null
+}
+
+function goToDetail(id: number) {
+  closeModal()
+  navigateTo(`/pokemons/${id}`)
+}
+
+function formatStatName(name: string): string {
+  const map: Record<string, string> = {
+    hp: 'HP', attack: 'ATK', defense: 'DEF',
+    'special-attack': 'SP.ATK', 'special-defense': 'SP.DEF', speed: 'SPD',
+  }
+  return map[name] ?? name
+}
+
+function statColor(val: number): string {
+  if (val >= 100) return 'stat--high'
+  if (val >= 60)  return 'stat--mid'
+  return 'stat--low'
+}
+
+/* ── keyboard close ── */
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') closeModal()
+}
+
 /* ── initial load ── */
 onMounted(async () => {
+  window.addEventListener('keydown', onKeydown)
   try {
     const res  = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025&offset=0')
     const data = await res.json()
@@ -271,9 +401,9 @@ onMounted(async () => {
   }
 })
 
-const goToPokemon = (id: number) => {
-  navigateTo(`/pokemons/${id}`)
-}
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+})
 </script>
 
 <style scoped>
@@ -439,7 +569,6 @@ const goToPokemon = (id: number) => {
 }
 .type-pill:hover { color: var(--color-heading); border-color: #334155; }
 
-/* Active pill inherits the type color */
 .type-pill--active.type-pill--normal   { background:#6D6D4E; color:#fff; border-color:#6D6D4E; }
 .type-pill--active.type-pill--fire     { background:#9C531F; color:#fff; border-color:#9C531F; }
 .type-pill--active.type-pill--water    { background:#445E9C; color:#fff; border-color:#445E9C; }
@@ -501,10 +630,13 @@ const goToPokemon = (id: number) => {
   gap: 6px;
   padding: 14px 10px 12px;
   background: #0B1220;
-  cursor: default;
-  transition: background .2s ease;
+  cursor: pointer;
+  transition: background .2s ease, transform .15s ease;
 }
-.poke-card:hover { background: #0F1A2E; }
+.poke-card:hover {
+  background: #0F1A2E;
+  transform: translateY(-2px);
+}
 
 .poke-card__num {
   font-family: var(--font-mono);
@@ -556,6 +688,11 @@ const goToPokemon = (id: number) => {
   border-radius: 3px;
   color: #fff;
   font-weight: 600;
+}
+.type-badge--lg {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 5px;
 }
 .type-badge--normal   { background:#6D6D4E; }
 .type-badge--fire     { background:#9C531F; }
@@ -623,14 +760,222 @@ const goToPokemon = (id: number) => {
   padding: 0 4px;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Pokemon Modal
+   ═══════════════════════════════════════════════════════════════ */
+.poke-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 10, 22, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.poke-modal__card {
+  background: #0B1220;
+  border: 1px solid #1E2D45;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(59, 130, 246, 0.08);
+}
+
+/* Modal header (terminal bar style) */
+.poke-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #0D1726;
+  border-bottom: 1px solid #1E2D45;
+}
+.poke-modal__dots {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.poke-modal__dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: block;
+}
+.poke-modal__id {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-muted);
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+}
+.poke-modal__close {
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 3px 7px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color .2s, background .2s;
+  flex-shrink: 0;
+}
+.poke-modal__close:hover {
+  color: var(--color-heading);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Modal body */
+.poke-modal__body {
+  padding: 24px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Sprite */
+.poke-modal__sprite-wrap {
+  width: 168px;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.poke-modal__sprite {
+  width: 168px;
+  height: 168px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 24px rgba(59, 130, 246, 0.35));
+  animation: jv-float-sprite 4s ease-in-out infinite;
+}
+.poke-modal__sprite-skeleton {
+  width: 168px;
+  height: 168px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #1E2D45 25%, #253650 50%, #1E2D45 75%);
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s ease infinite;
+}
+
+/* Types */
+.poke-modal__types {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Stats */
+.poke-modal__stats {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.poke-modal__stat-row {
+  display: grid;
+  grid-template-columns: 58px 30px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.poke-modal__stat-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-muted);
+  letter-spacing: 0.5px;
+}
+.poke-modal__stat-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-heading);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.poke-modal__stat-bar {
+  height: 5px;
+  background: #1A2A40;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.poke-modal__stat-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.7s cubic-bezier(.22,1,.36,1);
+}
+.stat--high { background: #22C55E; }
+.stat--mid  { background: #FACC15; }
+.stat--low  { background: #F97316; }
+
+/* CTA button */
+.poke-modal__cta {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  padding: 9px 24px;
+  border-radius: 7px;
+  border: 1px solid var(--color-primary);
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.poke-modal__cta:hover {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.4);
+}
+
+/* ── Modal transition ─────────────────────────────────────────── */
+.poke-modal-enter-active {
+  transition: opacity 0.22s ease;
+}
+.poke-modal-leave-active {
+  transition: opacity 0.18s ease;
+}
+.poke-modal-enter-from,
+.poke-modal-leave-to {
+  opacity: 0;
+}
+.poke-modal-enter-active .poke-modal__card {
+  transition: transform 0.28s cubic-bezier(.34,1.4,.64,1), opacity 0.22s ease;
+}
+.poke-modal-leave-active .poke-modal__card {
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+.poke-modal-enter-from .poke-modal__card {
+  transform: scale(0.92) translateY(12px);
+  opacity: 0;
+}
+.poke-modal-leave-to .poke-modal__card {
+  transform: scale(0.94) translateY(8px);
+  opacity: 0;
+}
+
+/* ── Keyframes ──────────────────────────────────────────────────── */
 @keyframes skeleton-sweep {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+@keyframes jv-float-sprite {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
 }
 
 @media (max-width: 640px) {
   .live-lab { padding: 80px 20px; }
   .poke-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
   .terminal__bar { flex-wrap: wrap; }
+  .poke-modal__card { max-width: 340px; }
+  .poke-modal__sprite-wrap,
+  .poke-modal__sprite { width: 140px; height: 140px; }
 }
 </style>

@@ -35,6 +35,7 @@ const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'lab.lead': 'No solo integro APIs — las consumo, cacheo, pagino y filtro en tiempo real. Esta demo está hablando con pokeapi.co ahora mismo.',
     'lab.searchPlaceholder': 'buscar por nombre o número (ej: pikachu, 25)',
     'lab.loading': 'conectando con pokeapi.co...',
+    'lab.viewDetail': 'Ver detalle',
     // ── Referencias ─────────────────────────────────────────────
     'refs.eyebrow': '05 · Referencias',
     'refs.title': 'Confían en mi trabajo.',
@@ -174,6 +175,7 @@ const TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'lab.lead': "I don't just integrate APIs — I consume, cache, paginate and filter them in real time. This demo is talking to pokeapi.co right now.",
     'lab.searchPlaceholder': 'search by name or number (e.g. pikachu, 25)',
     'lab.loading': 'connecting to pokeapi.co...',
+    'lab.viewDetail': 'View detail',
     // ── References ───────────────────────────────────────────────
     'refs.eyebrow': '05 · References',
     'refs.title': 'They trust my work.',
